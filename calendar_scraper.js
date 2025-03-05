@@ -2,26 +2,28 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 const fs = require("fs-extra");
 
-// URL of the DU Main Calendar
-const URL = "https://www.du.edu/calendar";
+const BASE_URL = "https://www.du.edu";
+const CALENDAR_URL = "https://www.du.edu/calendar";
 
+// Function to scrape the DU Calendar page
 async function scrapeDUCalendar() {
     try {
-        // Fetch the page
-        const { data } = await axios.get(URL);
+        console.log("⏳ Fetching DU Calendar...");
+        const { data } = await axios.get(CALENDAR_URL);
         const $ = cheerio.load(data);
         let events = [];
 
-        // Select all event cards
+        // Extract event details from the listing page
         $("a.event-card").each((index, element) => {
-            const title = $(element).find("h3").text().trim();
-            const date = $(element).find("p").first().text().trim();
-            const time = $(element).find("p:contains('icon-du-clock')").text().trim();
-            const url = $(element).attr("href");
+            const title = $(element).find("h3").text().trim(); // Description is actually the title inside <h3>
+            const date = $(element).find("p").first().text().trim(); // First <p> = Date
+            const time = $(element).find("p").eq(1).text().trim(); // Second <p> = Time
+            const url = $(element).attr("href"); // Event page URL
 
             let event = { title, date, url };
             if (time) event.time = time;
-            
+            if (title) event.description = title; // Correcting the description to use <h3>
+
             events.push(event);
         });
 
